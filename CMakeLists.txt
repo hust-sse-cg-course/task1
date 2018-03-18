@@ -23,23 +23,34 @@ endif()
 include_directories(include/
                     external/glad/include/
                     external/glfw/include/
-                    external/glm)
+                    external/stb)
 
-file(GLOB GLAD_SOURCES external/glad/src/glad.c)
+file(GLOB EXTERNAL_SOURCES external/glad/src/glad.c
+                           external/stb/stb_image.cpp)
 file(GLOB PROJECT_HEADERS include/*.h)
 file(GLOB PROJECT_SOURCES src/*.cpp)
 
 source_group("Headers" FILES ${PROJECT_HEADERS})
 source_group("Sources" FILES ${PROJECT_SOURCES})
-source_group("Externals" FILES ${GLAD_SOURCES})
+source_group("Externals" FILES ${EXTERNAL_SOURCES})
 
 add_definitions(-DGLFW_INCLUDE_NONE
                 -DPROJECT_SOURCE_DIR=\"${PROJECT_SOURCE_DIR}\")
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS}
-                               ${GLAD_SOURCES})
+                               ${EXTERNAL_SOURCES})
 
 target_link_libraries(${PROJECT_NAME} glfw
                       ${GLFW_LIBRARIES} ${GLAD_LIBRARIES})
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/${PROJECT_NAME}_Debug
     RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/${PROJECT_NAME}_Release)
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES 
+        VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+endif()
+
+add_custom_command(TARGET ${PROJECT_NAME}
+                   POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${CMAKE_SOURCE_DIR}/res
+                   $<TARGET_FILE_DIR:${PROJECT_NAME}>/res)
